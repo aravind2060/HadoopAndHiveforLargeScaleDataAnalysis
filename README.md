@@ -19,82 +19,308 @@
 ## Problem 1: Data Preparation and Quality Assurance
 
 ### Objective
-Prepare the GHCNd dataset for analysis, focusing on accuracy and reliability.
+Ensure the GHCNd dataset is ready for analysis, focusing on accuracy and completeness.
 
-### Tasks and Steps
+### Task 1: Environment Setup and Data Acquisition
 
-#### Task 1: Environment Setup and Data Acquisition
+1. **Install Hadoop and Hive**
+   - Download Hadoop on docker
+   
+2. **Prepare GHCNd Dataset**
+   - Download dataset: `https://www.ncei.noaa.gov/pub/data/ghcn/daily/by_year/`
+   - Unzip dataset: `unzip ghcnd-data.zip`
+   - Upload dataset to HDFS: `hdfs dfs -put local_path /hdfs_path`
 
-- **Step 1.1:** Install Hadoop and configure it for local or cloud-based data processing.
-- **Step 1.2:** Install Hive and set it up on top of the Hadoop ecosystem.
-- **Step 1.3:** Prepare your development environment with necessary tools (e.g., IDE) and libraries (e.g., Python with pandas for data manipulation).
-- **Step 1.4:** Download the GHCNd dataset from the NOAA website.
-- **Step 1.5:** Upload the dataset to HDFS, ensuring it's properly distributed across the cluster for efficient processing.
-- **Step 1.6:** Create a Hive table to map to the GHCNd dataset structure, facilitating easy data querying and manipulation.
+### Task 2: Data Filtering and Augmentation
 
-#### Task 2: Data Filtering and Augmentation
+#### MapReduce Option for Filtering
+- **Mapper (Filtering):**
+  - Input: Raw GHCNd data.
+  - Process: Parse each record; if `date` within range and `location` matches, emit to reducer.
+  - Pseudocode:
+    ```
+    def map(key, value):
+        record = parse(value)
+        if record.date in range and record.location in locations:
+            emit(record.location, record)
+    ```
+- **Reducer (Aggregation):**
+  - Input: Filtered records from Mapper.
+  - Process: Aggregate records by location; combine data with metadata.
+  - Pseudocode:
+    ```
+    def reduce(key, values):
+        aggregated_data = aggregate(values)
+        emit(key, aggregated_data)
+    ```
 
-- **Option A (MapReduce):**
-    - **Step 2.1.a:** Write a MapReduce job to filter records by the desired date range and geographic locations.
-    - **Step 2.1.b:** Augment filtered data with station metadata using a MapReduce join operation.
-- **Option B (HiveQL):**
-    - **Step 2.2.a:** Use HiveQL to perform filtering based on date and location directly on the dataset stored in Hive.
-    - **Step 2.2.b:** Augment weather data with station metadata using HiveQL join clauses.
+#### HiveQL Option for Filtering and Augmentation
+- **Create Tables and Query:**
+  - Create table for GHCNd data and metadata.
+    ```sql
+    CREATE TABLE ghcnd_data (station_id STRING, date STRING, metric STRING, value DOUBLE)
+    STORED AS TEXTFILE;
+    ```
+  - Load data into table: `LOAD DATA INPATH '/hdfs_path/ghcnd_data' INTO TABLE ghcnd_data;`
+  - Filtering and joining data with metadata:
+    ```sql
+    SELECT d.*, m.location
+    FROM ghcnd_data d
+    JOIN metadata m ON (d.station_id = m.station_id)
+    WHERE d.date BETWEEN '1974-01-01' AND '2024-12-31';
+    ```
 
-#### Task 3: Handling Missing or Incomplete Data
+### Task 3: Handling Missing or Incomplete Data
 
-- **Option A (MapReduce):**
-    - **Step 3.1.a:** Identify records with missing temperature or precipitation data using a MapReduce job.
-    - **Step 3.1.b:** Exclude stations with a significant amount of missing data to ensure data quality.
-- **Option B (HiveQL):**
-    - **Step 3.2.a:** Use HiveQL functions to count missing data points and identify stations with excessive missing data.
-    - **Step 3.2.b:** Exclude these stations from the dataset using HiveQL `WHERE` clause conditions.
+#### MapReduce Option for Missing Data
+- **Mapper (Identifying Missing Data):**
+  - Process: Check each record for missing fields; emit indicators for missingness.
+- **Reducer (Handling Missing Data):**
+  - Process: Apply imputation strategy based on the field and context (mean, median, etc.).
 
-#### Task 4: Outlier Detection and Correction
+#### HiveQL Option for Missing Data
+- **Imputation Query:**
+  - Identify missing data: `SELECT station_id, COUNT(*) FROM ghcnd_data WHERE value IS NULL GROUP BY station_id;`
+  - Impute missing data (example for temperature): 
+    ```sql
+    CREATE TABLE ghcnd_imputed AS
+    SELECT station_id, date, metric,
+    CASE
+        WHEN value IS NULL THEN (SELECT AVG(value) FROM ghcnd_data)
+        ELSE value
+    END as value
+    FROM ghcnd_data;
+    ```
 
-- **Option A (MapReduce):**
-    - **Step 4.1.a:** Calculate statistical measures (mean, median, standard deviation) for temperature and precipitation using MapReduce.
-    - **Step 4.1.b:** Identify outliers based on these statistical measures and replace them with median values.
-- **Option B (HiveQL):**
-    - **Step 4.2.a:** Use HiveQL to compute statistical measures and identify outliers in the dataset.
-    - **Step 4.2.b:** Replace outlier values with median values using HiveQL update statements.
+### Task 4: Outlier Detection and Correction
 
-#### Task 5: Final Data Quality Assurance and Compilation
+#### MapReduce Option for Outliers
+- **Mapper (Detecting Outliers):**
+  - Process: Calculate local statistics and identify outliers based on standard deviation.
+- **Reducer (Correcting Outliers):**
+  - Process: Adjust outliers using global statistics or predefined thresholds.
 
-- **Step 5.1:** Perform a comprehensive data quality review using HiveQL queries to ensure all data transformations have been applied accurately.
-- **Step 5.2:** Compile the final cleaned and processed dataset into a new Hive table, ready for further analysis.
+#### HiveQL Option for Outliers
+- **Outlier Handling Query:**
+  - Calculate statistics and flag outliers: 
+    ```sql
+    SELECT station_id, value,
+    CASE
+        WHEN value > (SELECT AVG(value) + 3 * STDDEV(value) FROM ghcnd_data) THEN 'outlier'
+        ELSE 'normal'
+    END
+    FROM ghcnd_data;
+    ```
+
+### Task 5: Final Data Quality Assurance
+
+- **HiveQL for Data Quality Checks:**
+  - Perform consistency checks: `SELECT COUNT(*) FROM ghcnd_imputed WHERE value IS NULL;`
+  - Data distribution analysis to identify anomalies post-cleaning.
+
+
 
 ## Problem 2: Temperature Analysis
 
+### Overview
+Conduct an in-depth analysis of temperature trends within the GHCNd dataset focusing on average temperature calculations, trend analysis, and comparative temperature analysis across different regions.
+
 ### Task 1: Temperature Data Extraction and Preprocessing
 
-#### Using MapReduce
-- **Step 1.1:** Write MapReduce jobs to extract and preprocess temperature data based on specified criteria (location and time period).
-- **Step 1.2:** Aggregate the data to the required temporal granularity (year, month, day) for analysis.
+- **MapReduce Approach:**
+  - **Map Phase:** Extract relevant temperature data based on criteria (date, location).
+  - **Reduce Phase:** Clean and preprocess the data, normalizing formats and resolving inconsistencies.
 
-#### Using HiveQL
-- **Step 1.3:** Use HiveQL to efficiently select and aggregate temperature data for analysis, streamlining the preprocessing step.
+- **HiveQL Approach:**
+  - Create a Hive table for temperature data.
+  - Execute a HiveQL query to select and preprocess relevant records.
 
 ### Task 2: Average Temperature Calculation
 
-#### Using MapReduce
-- **Step 2.1:** Calculate average minimum, maximum, and mean temperatures for each time unit using MapReduce.
+- **MapReduce Approach:**
+  - **Map Phase:** Map each temperature record to its corresponding time unit (day, month).
+  - **Reduce Phase:** Calculate the average temperature for each time unit.
 
-#### Using HiveQL
-- **Step 2.2:** Simplify the calculation of average temperatures by utilizing HiveQL's aggregate functions.
+- **HiveQL Approach:**
+  - Use HiveQL to directly calculate average temperatures by time unit with a single query.
 
 ### Task 3: Temperature Trend Analysis
 
-#### Using MapReduce
-- **Step 3.1:** Analyze temperature trends over the selected time period with MapReduce, identifying significant changes.
+- **MapReduce Approach:**
+  - **Map Phase:** Tag temperature data with year for trend analysis.
+  - **Reduce Phase:** Analyze changes in temperature over years to identify trends.
 
-#### Using HiveQL
-- **Step 3.2:** Conduct temperature trend analysis using HiveQL for a more straightforward approach to identifying year-over-year changes.
+- **HiveQL Approach:**
+  - Apply HiveQL window functions to calculate moving averages and identify trends.
 
 ### Task 4: Comparative Temperature Analysis
 
-#### Using MapReduce
-- **Step 4.1:** Compare temperature data between two regions using MapReduce to highlight differences.
+- **MapReduce Approach:**
+  - **Map Phase:** Identify temperature records for specific regions to be compared.
+  - **Reduce Phase:** Calculate statistical measures (e.g., average, max) for comparison.
 
-#### Using HiveQL
-- **Step 4.2:** Perform comparative temperature analysis across locations using HiveQL, enabling efficient cross-region comparisons.
+- **HiveQL Approach:**
+  - Use HiveQL queries to compare temperature data across different geographic regions.
+
+
+## Problem 3: Extreme Weather Events Analysis
+
+### Overview
+Utilize Hive to identify and analyze extreme weather events within the GHCNd dataset, focusing on heatwaves and cold spells across different geographic locations and time frames.
+
+### Task 1: Setup Hive Tables for Weather Data
+
+- **Create Hive Tables:**
+  - Design a Hive table schema that includes daily temperature and precipitation data, along with geographic and temporal identifiers.
+  - Load the GHCNd dataset into the Hive table, ensuring data is partitioned appropriately for efficient querying.
+
+### Task 2: Define Criteria for Extreme Weather Events
+
+- **Identify Heatwaves:**
+  - Establish criteria for what constitutes a heatwave in your dataset (e.g., temperatures exceeding a certain percentile or threshold for a consecutive number of days).
+  
+- **Identify Cold Spells:**
+  - Define criteria for cold spells (e.g., temperatures below a certain percentile or threshold for a consecutive number of days).
+
+### Task 3: Querying for Extreme Weather Events
+
+- **HiveQL for Heatwaves:**
+  - Craft a HiveQL query that identifies periods and locations experiencing heatwaves based on the defined criteria.
+    ```sql
+    SELECT location, COUNT(*) as consecutive_days, MIN(date), MAX(date)
+    FROM weather_data
+    WHERE temperature > threshold
+    GROUP BY location, date_sub(date, row_number() over(partition by location order by date))
+    HAVING consecutive_days >= min_days_for_heatwave;
+    ```
+  
+- **HiveQL for Cold Spells:**
+  - Develop a similar HiveQL query to identify periods and locations of cold spells.
+    ```sql
+    SELECT location, COUNT(*) as consecutive_days, MIN(date), MAX(date)
+    FROM weather_data
+    WHERE temperature < threshold
+    GROUP BY location, date_sub(date, row_number() over(partition by location order by date))
+    HAVING consecutive_days >= min_days_for_cold_spell;
+    ```
+
+### Task 4: Analyzing the Frequency and Intensity of Extreme Weather Events
+
+- **Frequency Analysis:**
+  - Use HiveQL to calculate the frequency of heatwaves and cold spells across different regions and over time.
+  
+- **Intensity Analysis:**
+  - Analyze the intensity of identified extreme weather events by examining temperature extremes, duration, and any associated precipitation data.
+
+### Task 5: Comparative Analysis Across Locations
+
+- **Comparative HiveQL Queries:**
+  - Compare the occurrence, frequency, and intensity of extreme weather events between different geographic regions.
+  - Identify patterns or anomalies in the data that may indicate changing climate trends.
+
+
+
+## Problem 4: Precipitation Analysis
+
+### Overview
+Conduct a comprehensive analysis of precipitation data to identify significant rainfall events, drought periods, and compare precipitation patterns across various geographic locations.
+
+### Task 1: Data Preparation
+
+- **Prepare GHCNd Dataset:**
+ - Ensure the GHCNd dataset, specifically precipitation records, is accessible in HDFS for MapReduce tasks and in Hive tables for querying.
+
+### Task 2: Precipitation Data Analysis
+
+#### MapReduce Approach for Total Precipitation
+
+- **Map Phase (Data Extraction):**
+ - Extract precipitation data from the GHCNd dataset, focusing on daily precipitation amounts.
+  
+- **Reduce Phase (Aggregation):**
+ - Aggregate total precipitation by time unit (e.g., monthly, annually) and by geographic location.
+
+#### HiveQL Approach for Aggregation
+
+- **Total Precipitation Calculation:**
+ - Use HiveQL to calculate total precipitation by location and time unit directly from the Hive table.
+  ```sql
+  SELECT location, year, month, SUM(precipitation) as total_precipitation
+  FROM precipitation_data
+  GROUP BY location, year, month;
+  ```
+
+### Task 3: Identifying Extreme Precipitation Events
+
+#### MapReduce Approach for Extreme Events
+
+- **Map Phase (Event Identification):**
+ - Identify days with precipitation amounts exceeding a defined threshold indicating heavy rainfall or potential drought conditions.
+  
+- **Reduce Phase (Event Analysis):**
+ - Analyze the frequency and duration of these extreme precipitation events by location.
+
+#### HiveQL Approach for Extreme Events
+
+- **Extreme Event Query:**
+ - Craft HiveQL queries to identify periods of heavy rainfall and drought based on precipitation thresholds.
+  ```sql
+  SELECT location, COUNT(*) as days_exceeding_threshold
+  FROM precipitation_data
+  WHERE precipitation > heavy_rainfall_threshold OR precipitation < drought_threshold
+  GROUP BY location;
+  ```
+
+### Task 4: Comparative Precipitation Analysis Across Locations
+
+- **MapReduce and HiveQL:**
+ - Compare precipitation data between different geographic regions to identify areas with significant differences in rainfall patterns.
+ - Utilize both MapReduce and HiveQL to perform comparative analysis, focusing on variations in total precipitation, frequency of extreme events, and seasonal differences.
+
+
+## Problem 5: Climate Change Trends Analysis
+
+### Overview
+Perform a comprehensive analysis of long-term climate change trends by examining temperature and precipitation data. This analysis aims to uncover patterns that indicate climate change, such as increasing average temperatures, variations in precipitation, and changes in the occurrence of extreme weather events.
+
+### Task 1: Long-term Temperature and Precipitation Data Aggregation
+
+- **Prepare Data:**
+ - Ensure temperature and precipitation data from the GHCNd dataset is readily available in both HDFS for MapReduce operations and Hive for direct querying.
+
+#### MapReduce Approach for Data Aggregation
+
+- **Map Phase (Data Extraction):**
+ - Extract yearly temperature and precipitation data, focusing on long-term trends.
+  
+- **Reduce Phase (Aggregation):**
+ - Aggregate data to calculate average annual temperature and total annual precipitation, along with other relevant statistics.
+
+#### HiveQL Approach for Aggregation
+
+- **Annual Aggregation Query:**
+ - Use HiveQL to perform annual aggregation of temperature and precipitation data.
+  ```sql
+  SELECT year, AVG(temperature) as avg_temperature, SUM(precipitation) as total_precipitation
+  FROM climate_data
+  GROUP BY year;
+  ```
+
+### Task 2: Identifying Climate Change Indicators
+
+- **Temperature Trends:**
+ - Analyze long-term temperature data to identify warming or cooling trends across different geographic regions.
+
+- **Precipitation Trends:**
+ - Assess changes in annual precipitation levels, identifying regions with increasing drought or wetter conditions.
+
+- **Extreme Weather Event Frequency:**
+ - Evaluate data for trends in the frequency and intensity of extreme weather events, such as heat waves and heavy rainfall.
+
+### Task 3: Comparative Analysis Across Regions
+
+- **MapReduce and HiveQL:**
+ - Compare climate trends between different geographic regions to identify disparities in climate change impacts.
+ - Utilize both MapReduce and HiveQL to facilitate this comparative analysis, focusing on differences in temperature rises, precipitation changes, and extreme weather occurrences. 
+
+
