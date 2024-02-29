@@ -1,15 +1,12 @@
-# HadoopAndHiveforLargeScaleDataAnalysis
+## Project: Analyzing Climate Trends in North America with Cloud Computing
 
+**Learning Outcomes:**
 
-### Learning Outcomes
-
-By the end of this project, participants will have achieved a multifaceted understanding of data analysis at scale. Here are the key learning outcomes:
-
-1. **Mastery of Hadoop and Hive**: You'll gain hands-on experience in deploying and utilizing these powerful tools for managing and analyzing big data, providing a solid foundation in big data analytics.
-2. **Data Preparation and Cleaning**: Learn the critical steps of filtering, augmenting, and cleansing data to ensure accuracy and reliability, an essential skill in any data scientist's toolkit.
-3. **Advanced Data Analysis**: Through temperature and precipitation analysis, identifying extreme weather events, and assessing long-term climate change trends, you'll develop advanced analytical skills.
-4. **Critical Thinking and Problem-Solving**: The project challenges you to make decisions based on incomplete data, requiring creativity and critical thinking to fill in the gaps and draw meaningful conclusions.
-5. **Collaboration and Communication**: Working in groups, you'll enhance your ability to collaborate effectively, a key skill in any professional setting. Preparing a comprehensive report and presentation will also hone your communication skills, allowing you to convey complex information clearly and compellingly.
+* **Master Hadoop and Hive:** Gain hands-on experience with these big data tools for large-scale data analysis.
+* **Data Wrangling Fundamentals:** Learn crucial skills like data cleaning and preparation.
+* **Advanced Data Analysis:** Perform temperature and precipitation analysis, identify extreme weather events, and assess long-term climate trends.
+* **Critical Thinking and Problem-Solving:** Make data-driven decisions and troubleshoot challenges.
+* **Collaboration and Communication:** Work effectively in teams and present complex findings clearly.
 
 **Overview of each Tasks:**
 
@@ -19,67 +16,63 @@ By the end of this project, participants will have achieved a multifaceted under
 4. **Precipitation Analysis (MapReduce):** Analyze precipitation data for specific locations and time periods, calculating total precipitation at different aggregation units. Additionally, identify periods of heavy rainfall or drought based on defined thresholds.
 5. **Climate Change Trends (MapReduce or Hive):** Analyze long-term temperature and precipitation trends across different regions. This involves aggregating data by country/state and month, calculating relevant statistics, and identifying patterns and variations over the 50-year period.
 
+**Problem 1: Data Preparation and Quality Assurance**
 
-# Problem 1: Data Preparation and Quality Assurance
+**Objective:** Prepare the GHCNd data for analysis, ensuring its accuracy and reliability.
 
-The objective is to prepare the GHCNd dataset for analysis, ensuring data quality and integrity. We will leverage both MapReduce for custom data processing tasks and HiveQL for tasks suited to SQL-like queries.
+**Tasks:**
 
-## Task 1: Environment Setup and Data Acquisition and Storage
+1. **Environment Setup and Data Acquisition:**
 
-### Using MapReduce and Hive
-- **Step 1**: Set up Hadoop and Hive environments.
-- **Step 2**: Download the GHCNd dataset and upload it to HDFS.
-- **Step 3**: Create a Hive table to represent the GHCNd data for easy querying.
+    * **Step 1.1:** Install and configure Hadoop on your local machine or a cloud platform (e.g., AWS EMR, Azure HDInsight).
+    * **Step 1.2:** Install and configure Hive on top of your Hadoop environment.
+    * **Step 1.3:** Set up your development environment with necessary libraries/tools for scripting (e.g., Python with PySpark) and data manipulation (e.g., Pandas).
+    * **Step 1.4:** Download the GHCNd dataset for North America from the NOAA website.
+    * **Step 1.5:** Upload the downloaded dataset to the HDFS (Hadoop Distributed File System) for distributed processing.
+    * **Step 1.6:** Create a Hive table to represent the GHCNd data structure, allowing you to query the data using HiveQL.
 
-## Task 2: Data Filtering and Augmentation
+2. **Data Filtering and Augmentation:**
 
-### Using MapReduce
-- **Goal**: Filter data by date range (1974-2024) and geographic location (United States, Canada, Mexico).
-- **Steps**:
-  1. Write a MapReduce job in your chosen language to select records within the specified date range.
-  2. Further refine output to include only target geographic locations.
+    * **Step 2.1 (Choose Option A or B):**
+        **Option A (MapReduce):**
+            * Develop a MapReduce job to filter the data based on the desired date range (1974-2024).
+            * Implement similar logic as described in the previous version for filtering based on location (US, Canada, Mexico).
+        **Option B (HiveQL):**
+            * Use HiveQL queries to achieve both date and location filtering in a single step. Leverage `WHERE` clause conditions for date filtering and filter by specific country names or codes for location.
+    * **Step 2.2 (HiveQL):** Load station metadata (containing location details) into a separate Hive table.
+    * **Step 2.3 (HiveQL):** Use a `JOIN` query to merge the filtered weather data with the station metadata table based on a common identifier (e.g., station ID). This enriches the weather data with additional location information.
 
-### Using HiveQL
-- **Goal**: Augment weather data with station metadata.
-- **Steps**:
-  1. Load station metadata into a separate Hive table.
-  2. Use a `JOIN` query to merge weather data with station metadata based on station IDs.
+3. **Handling Missing or Incomplete Data:**
 
-## Task 3: Handling Missing or Incomplete Data
+    * **Step 3.1 (Choose Option A or B):**
+        **Option A (MapReduce):**
+            * Write a MapReduce job to calculate the number of missing data points for each station across the entire dataset.
+            * Implement another MapReduce job to identify and exclude stations exceeding a defined threshold (e.g., more than 10 consecutive days of missing data).
+        **Option B (HiveQL):**
+            * Utilize HiveQL functions like `COUNT` and conditional expressions to identify stations with excessive missing data points.
+    * **Step 3.2 (Choose Option A or B):**
+        **Option A (MapReduce):**
+            * Develop a MapReduce job to impute missing temperature and precipitation data using average values calculated from surrounding data points.
+        **Option B (HiveQL):**
+            * Use HiveQL's `AVG` function and window functions like `LEAD`/`LAG` to calculate average values for missing data points based on surrounding data points.
+    * **Step 3.3 (HiveQL):** Update the existing Hive table with the imputed values to replace missing data.
 
-### Using MapReduce
-- **Goal**: Identify and exclude stations with significant missing data.
-- **Steps**:
-  1. Develop a MapReduce job to count missing data points for each station.
-  2. Exclude stations with more than 10 consecutive days of missing data.
+4. **Outlier Detection and Correction:**
 
-### Using HiveQL
-- **Goal**: Impute missing temperature and precipitation data.
-- **Steps**:
-  1. Use `AVG` and `LEAD`/`LAG` functions in HiveQL to calculate average values for missing data points.
-  2. Apply these average values to impute missing data.
+    * **Step 4.1 (Choose Option A or B):**
+        **Option A (MapReduce):**
+            * Develop a MapReduce job to calculate statistical measures like mean and standard deviation for both temperature and precipitation data across the entire dataset.
+            * Identify outliers exceeding a specific threshold (e.g., 3 standard deviations away from the mean) and replace them with median values.
+        **Option B (HiveQL):**
+            * Utilize HiveQL window functions like `AVG` and `STDDEV` to calculate statistics. 
+            * Use conditional expressions and comparison operators to identify outliers based on the calculated mean and standard deviation.
+            * Update the table with median values retrieved using appropriate window functions (e.g., `MEDIAN`).
 
-## Task 4: Outlier Detection and Correction
+5. **Final Data Quality Assurance and Compilation:**
 
-### Using MapReduce
-- **Goal**: Detect and correct outliers in temperature and precipitation data.
-- **Steps**:
-  1. Implement a MapReduce job to calculate statistical metrics (mean, standard deviation) for temperature and precipitation.
-  2. Identify outliers as data points beyond 3 standard deviations from the mean and replace them with median values.
+    * **Step 5.1 (HiveQL):** Perform final checks using HiveQL queries to validate data transformations and ensure data quality.
+    * **Step 5.2 (HiveQL):** Use `CREATE TABLE AS SELECT` to compile the final, cleaned dataset ready for further analysis.
 
-### Using HiveQL
-- **Goal**: Simplify outlier detection with SQL-like queries.
-- **Steps**:
-  1. Use HiveQL to identify outliers using the `NTILE` function to group data into percentiles.
-  2. Update outlier values to median values within the same percentile group.
-
-## Task 5: Final Data Quality Assurance and Compilation
-
-### Using Hive
-- **Goal**: Ensure data quality and compile the final dataset.
-- **Steps**:
-  1. Perform a final review using HiveQL queries to validate data transformations.
-  2. Use `CREATE TABLE AS SELECT` to compile the final, cleaned dataset ready for analysis.
 
 
 
