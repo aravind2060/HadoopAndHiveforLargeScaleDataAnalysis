@@ -24,10 +24,9 @@ public class AugmentMapper extends Mapper<LongWritable, Text, Text, Text> {
         loadGeoGraphicMetadata(conf, stateFilePath);
     }
 
-	private void loadGeoGraphicMetadata(Configuration conf, String hdfsFilePath) {
+	private void loadGeoGraphicMetadata(Configuration conf, String hdfsFilePath)throws IOException {
 		Path path = new Path(hdfsFilePath);
-		try(FileSystem fs = FileSystem.get(conf);){
-		
+        FileSystem fs = FileSystem.get(conf);
         
     	try (BufferedReader reader = new BufferedReader(new InputStreamReader(fs.open(path)))) {
             String line;
@@ -47,10 +46,7 @@ public class AugmentMapper extends Mapper<LongWritable, Text, Text, Text> {
             	
             }
         }
-		} catch (IOException e) {
-			
-			e.printStackTrace();
-		}
+		
 	}
 	
 	@Override

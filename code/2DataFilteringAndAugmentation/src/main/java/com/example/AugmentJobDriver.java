@@ -11,7 +11,7 @@ import com.example.reducer.AugmentReducer;
 
 public class AugmentJobDriver {
     public static void main(String[] args) throws Exception {
-    	if (args.length < 4) {
+    	if (args.length < 3) {
             System.err.println("Usage: AugmentJobDriver <input path> <output path> <GeoGraphic Metadata file> ");
             System.exit(-1);
         }
