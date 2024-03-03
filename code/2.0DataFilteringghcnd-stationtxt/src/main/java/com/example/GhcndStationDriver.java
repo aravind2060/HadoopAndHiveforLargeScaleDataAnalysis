@@ -19,6 +19,7 @@ public class GhcndStationDriver {
         }
 
         Configuration conf = new Configuration();
+        conf.set("state.metadata.path", args[2]);
         Job job = Job.getInstance(conf, "GHCN Data Processing");
 
         job.setJarByClass(GhcndStationDriver.class);
