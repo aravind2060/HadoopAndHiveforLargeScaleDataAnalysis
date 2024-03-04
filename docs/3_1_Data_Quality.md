@@ -65,6 +65,10 @@ hadoop jar DataFilteringAndAugmentation-0.0.1-SNAPSHOT.jar com.example.AugmentJo
 Step 4: Sorting Data
 hadoop jar SortingData-0.0.1-SNAPSHOT.jar com.example.SortingJobDriver user/root/output/part-r-00000 user/root/out
 
+Step 5: Discarding Data which are older than 10 days
+  Before this old delete as because its going to increase space 
+  ```sh hadoop fs -rm -R user/root/output ```
+```sh  hadoop jar DiscardMissingData-0.0.1-SNAPSHOT.jar com.example.ElementGapDriver user/root/out/part-r-00000 user/root/output ```
 
 
 
