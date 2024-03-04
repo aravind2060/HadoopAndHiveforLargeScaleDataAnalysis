@@ -14,7 +14,7 @@ This project processes GHCN-Daily weather data using Hadoop MapReduce, focusing 
 Compile the Java classes into a JAR and run the MapReduce job with:
 
 ```sh
-hadoop jar /opt/hadoop-3.2.1/share/hadoop/mapreduce/DataFiltering-0.0.1-SNAPSHOT.jar GHCNDataProcessor user/root/input/weather output/
+hadoop jar /opt/hadoop-3.2.1/share/hadoop/mapreduce/DataFiltering-0.0.1-SNAPSHOT.jar com.example.GHCNDataProcessor user/root/input/weather output/
 ```
 
 - `<input_path>`: HDFS path to GHCN-Daily data.

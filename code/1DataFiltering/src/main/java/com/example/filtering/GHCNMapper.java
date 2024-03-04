@@ -28,7 +28,7 @@ public class GHCNMapper extends Mapper<LongWritable, Text, Text, Text> {
 
         try {
             int year = Integer.parseInt(parts[1].substring(0, 4));
-            if ((parts[2].equals("TMAX") || parts[2].equals("TMIN") || parts[2].equals("PRCP"))) {
+            if ((parts[2].equals("TMAX") || parts[2].equals("TMIN") || parts[2].equals("TAVG") || parts[2].equals("PRCP"))) {
                 context.write(new Text(stationID), new Text(parts[1] + "," + parts[2] + "," + parts[3]));
             }
         } catch (NumberFormatException e) {
