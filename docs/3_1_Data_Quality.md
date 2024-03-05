@@ -72,7 +72,7 @@ Step 5: Discarding Data which are older than 10 days
   ```sh hadoop fs -rm -R user/root/output ```
 ```sh  hadoop jar DiscardMissingData-0.0.1-SNAPSHOT.jar com.example.ElementGapDriver user/root/out/part-r-00000 user/root/output ```
 
-Step 5: Imputation of Temperature
+Step 6: Imputation of Temperature
 
 ```sh 
  hadoop jar DataImputationAndAggregation-0.0.1-SNAPSHOT.jar com.example.TemperatureDataProcessingDriver user/root/output/part-r-00000 user/root/output2
