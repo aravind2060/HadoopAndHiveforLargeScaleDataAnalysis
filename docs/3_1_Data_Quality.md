@@ -78,3 +78,9 @@ Step 6: Imputation of Temperature
  hadoop jar DataImputationAndAggregation-0.0.1-SNAPSHOT.jar com.example.TemperatureDataProcessingDriver user/root/output/part-r-00000 user/root/output2
 ```
 Also the result is now changed output will look like : station id, date, tmin value,tmax value,tavg value,prcp value,state,location,country
+
+
+Step 7 : Imputation of Precipitation data
+```sh 
+   hadoop jar ImputationPrecipitation-0.0.1-SNAPSHOT.jar com.example.PrecipitationDriver user/root/output2/part-r-00000 user/root/output3
+```
