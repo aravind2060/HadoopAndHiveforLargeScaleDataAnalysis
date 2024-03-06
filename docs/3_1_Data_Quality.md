@@ -84,3 +84,13 @@ Step 7 : Imputation of Precipitation data
 ```sh 
    hadoop jar ImputationPrecipitation-0.0.1-SNAPSHOT.jar com.example.PrecipitationDriver user/root/output2/part-r-00000 user/root/output3
 ```
+
+Step 8: Temperature Outliers
+```sh
+   hadoop jar TemperatureOutliers-0.0.1-SNAPSHOT.jar com.example.TemperatureOutlierDriver user/root/output3/part-r-00000 user/root/output4
+```
+
+Step 9: Percipitation Outliers
+``` sh
+  hadoop jar PercipitationOutliers-0.0.1-SNAPSHOT.jar com.example.PercipitationOutlierDriver user/root/output5/part-r-00000 user/root/output6
+```
