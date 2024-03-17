@@ -8,7 +8,7 @@
 - **Critical Thinking and Problem-Solving:** Enhance abilities to make data-driven decisions and address challenges.
 - **Collaboration and Communication:** Improve teamwork skills and effectively communicate complex findings.
 
-## Overview of Tasks
+## Overview of Taskss
 
 1. **Data Quality (MapReduce):** Preparation and cleaning of data for analysis. This includes filtering, handling missing values, and addressing outliers.
 2. **Temperature Analysis (MapReduce):** Analyze temperature data to calculate average minimum, maximum, and average temperatures for specified locations and periods.
