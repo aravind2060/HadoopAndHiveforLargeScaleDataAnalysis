@@ -65,38 +65,69 @@ The output is formatted as CSV with columns: StationID, StateName, LocationName,
 
 
 Step 3 : Augmentation of data
-```sh hadoop jar DataFilteringAndAugmentation-0.0.1-SNAPSHOT.jar com.example.AugmentJobDriver user/root/output1/part-r-00000 user/root/output2 metadatafiles/ghcnd_stations_updated.csv ```
+```sh
+hadoop jar DataFilteringAndAugmentation-0.0.1-SNAPSHOT.jar com.example.AugmentJobDriver user/root/output1/part-r-00000 user/root/output2 metadatafiles/ghcnd_stations_updated.csv
+```
 ![out2](https://github.com/aravind2060/HadoopAndHiveforLargeScaleDataAnalysis/assets/38257404/050dfe06-d3f2-4c78-ba1e-59e0c42dd521)
 
 
 Step 4: Sorting Data
-```sh hadoop jar SortingData-0.0.1-SNAPSHOT.jar com.example.SortingJobDriver user/root/output2/part-r-00000 user/root/output3 ```
+```sh
+hadoop jar SortingData-0.0.1-SNAPSHOT.jar com.example.SortingJobDriver user/root/output2/part-r-00000 user/root/output3
+```
+![image](https://github.com/aravind2060/HadoopAndHiveforLargeScaleDataAnalysis/assets/38257404/81bcdeba-915f-483e-8537-194ba59be169)
+
 
 
 Step 5: Discarding Data which are older than 10 days
   Before this old delete as because its going to increase space 
-  ```sh hadoop fs -rm -R user/root/output ```
-```sh  hadoop jar DiscardMissingData-0.0.1-SNAPSHOT.jar com.example.ElementGapDriver user/root/out/part-r-00000 user/root/output ```
+  Trying to delete older outputs just to save space
+  ```sh
+  hadoop fs -rm -R user/root/output1
+  ```
+  ```sh
+  hadoop fs -rm -R user/root/output2
+  ```
+```sh
+hadoop jar DiscardMissingData-0.0.1-SNAPSHOT.jar com.example.ElementGapDriver user/root/output3/part-r-00000 user/root/output4
+```
+![image](https://github.com/aravind2060/HadoopAndHiveforLargeScaleDataAnalysis/assets/38257404/e028aab8-9faa-4084-adfe-1d0e92d0a4fd)
+
+
 
 Step 6: Imputation of Temperature
 
 ```sh 
- hadoop jar DataImputationAndAggregation-0.0.1-SNAPSHOT.jar com.example.TemperatureDataProcessingDriver user/root/output/part-r-00000 user/root/output2
+ hadoop jar DataImputationAndAggregation-0.0.1-SNAPSHOT.jar com.example.TemperatureDataProcessingDriver user/root/output4/part-r-00000 user/root/output5
 ```
 Also the result is now changed output will look like : station id, date, tmin value,tmax value,tavg value,prcp value,state,location,country
+
+![image](https://github.com/aravind2060/HadoopAndHiveforLargeScaleDataAnalysis/assets/38257404/43f7fa34-bbeb-4772-9a9b-4e1fab800830)
+
 
 
 Step 7 : Imputation of Precipitation data
 ```sh 
-   hadoop jar ImputationPrecipitation-0.0.1-SNAPSHOT.jar com.example.PrecipitationDriver user/root/output2/part-r-00000 user/root/output3
+   hadoop jar ImputationPrecipitation-0.0.1-SNAPSHOT.jar com.example.PrecipitationDriver user/root/output5/part-r-00000 user/root/output6
 ```
+![image](https://github.com/aravind2060/HadoopAndHiveforLargeScaleDataAnalysis/assets/38257404/e100e802-105d-4bc3-bb3e-5de913e9f31f)
+
 
 Step 8: Temperature Outliers
 ```sh
-   hadoop jar TemperatureOutliers-0.0.1-SNAPSHOT.jar com.example.TemperatureOutlierDriver user/root/output3/part-r-00000 user/root/output4
+   hadoop jar TemperatureOutliers-0.0.1-SNAPSHOT.jar com.example.TemperatureOutlierDriver user/root/output6/part-r-00000 user/root/output7
 ```
+![image](https://github.com/aravind2060/HadoopAndHiveforLargeScaleDataAnalysis/assets/38257404/9df8bf74-e78c-40ff-84d6-10ec06a297c7)
+
 
 Step 9: Percipitation Outliers
 ``` sh
-  hadoop jar PercipitationOutliers-0.0.1-SNAPSHOT.jar com.example.PercipitationOutlierDriver user/root/output5/part-r-00000 user/root/output6
+  hadoop jar PercipitationOutliers-0.0.1-SNAPSHOT.jar com.example.PercipitationOutlierDriver user/root/output7/part-r-00000 user/root/output8
 ```
+![image](https://github.com/aravind2060/HadoopAndHiveforLargeScaleDataAnalysis/assets/38257404/beb3eeb6-88c2-4e69-9d31-5d7b05b57281)
+
+Now we have final data which is free from outliers, now for further analysis we have to use this data 
+```sh
+hadoop fs -cat user/root/output8/*
+```
+
