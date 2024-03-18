@@ -1,12 +1,13 @@
 version: "3"
 
 services:
+  # Hadoop Namenode (HDFS UI)
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: namenode
     restart: always
     ports:
-      - 9870:9870
+      - 9870:9870  # HDFS web interface
       - 9000:9000
     volumes:
       - hadoop_namenode:/hadoop/dfs/name
@@ -15,6 +16,7 @@ services:
     env_file:
       - ./hadoop.env
 
+  # Hadoop Datanodes
   datanode1:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode1
@@ -25,7 +27,7 @@ services:
       SERVICE_PRECONDITION: "namenode:9870"
     env_file:
       - ./hadoop.env
-  
+
   datanode2:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode2
@@ -48,17 +50,19 @@ services:
     env_file:
       - ./hadoop.env
 
+  # Hadoop Resource Manager (YARN UI)
   resourcemanager:
     image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
     container_name: resourcemanager
     restart: always
     ports:
-      - 8088:8088
+      - 8088:8088  # YARN ResourceManager web interface
     environment:
       SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864"
     env_file:
       - ./hadoop.env
 
+  # Hadoop Node Managers
   nodemanager1:
     image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
     container_name: nodemanager1
@@ -67,7 +71,7 @@ services:
       SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 resourcemanager:8088"
     env_file:
       - ./hadoop.env
-  
+
   nodemanager2:
     image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
     container_name: nodemanager2
@@ -86,10 +90,13 @@ services:
     env_file:
       - ./hadoop.env
 
+  # Hadoop MapReduce JobHistory Server (MapReduce UI)
   historyserver:
     image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
     container_name: historyserver
     restart: always
+    ports:
+      - 19888:19888  # MapReduce JobHistory Server web interface
     environment:
       SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 resourcemanager:8088"
     volumes:
@@ -97,6 +104,7 @@ services:
     env_file:
       - ./hadoop.env
 
+  # Hive services
   hive-pig:
     image: mvieira1975/hive-pig:v1
     container_name: hive-pig
@@ -106,8 +114,8 @@ services:
       HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
       SERVICE_PRECONDITION: "hive-metastore:9083 namenode:9000 resourcemanager:8088"
     ports:
-      - "10000:10000"
-      
+      - "10000:10000"  # HiveServer2 web UI (if enabled)
+
   hive-metastore:
     image: bde2020/hive:2.3.2-postgresql-metastore
     container_name: hive-metastore
@@ -117,17 +125,18 @@ services:
     environment:
       SERVICE_PRECONDITION: "namenode:9000 hive-metastore-postgresql:5432"
     ports:
-      - "9083:9083"
+      - "9083:9083"  # Hive Metastore service
 
   hive-metastore-postgresql:
     image: bde2020/hive-metastore-postgresql:2.3.0
     container_name: hive-metastore-postgresql
-  
+
+  # Hue Web Interface
   hue:
     image: gethue/hue:latest
     container_name: hue
     ports:
-      - "8888:8888"
+      - "8888:8888"  # Hue web interface
     restart: always
     volumes:
       - ./hue.ini:/usr/share/hue/desktop/conf/hue.ini
